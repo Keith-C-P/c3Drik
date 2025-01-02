@@ -9,7 +9,7 @@ mod rotation;
 mod terminal;
 mod vector;
 
-use object::Object;
+use object::{Object, Triangle};
 use vector::Vec3;
 
 fn ray_hit<'a>(r: &'a ray::Ray, tri: &'a object::Triangle) -> &'a str {
@@ -17,6 +17,21 @@ fn ray_hit<'a>(r: &'a ray::Ray, tri: &'a object::Triangle) -> &'a str {
         "#"
     } else {
         "."
+    }
+}
+
+fn draw_frame(camera: camera::Camera, tri: Triangle) {
+    for j in 0..camera.image_height() {
+        for i in 0..camera.image_width() {
+            let pixel_center: Vec3 = camera.pixel00_loc()
+                + (i as f64 * camera.pixel_delta_u())
+                + (j as f64 * camera.pixel_delta_v());
+            let ray_dir: Vec3 = pixel_center - camera.camera_pos();
+
+            let r: ray::Ray = ray::Ray::new(camera.camera_pos(), ray_dir);
+            print!("{}", ray_hit(&r, &tri));
+        }
+        println!("");
     }
 }
 
@@ -52,18 +67,7 @@ fn main() {
     };
     let mut tri = object::Triangle::new(a, b, c);
     loop {
-        for j in 0..camera.image_height() {
-            for i in 0..camera.image_width() {
-                let pixel_center: Vec3 = camera.pixel00_loc()
-                    + (i as f64 * camera.pixel_delta_u())
-                    + (j as f64 * camera.pixel_delta_v());
-                let ray_dir: Vec3 = pixel_center - camera.camera_pos();
-
-                let r: ray::Ray = ray::Ray::new(camera.camera_pos(), ray_dir);
-                print!("{}", ray_hit(&r, &tri));
-            }
-            println!("");
-        }
+        draw_frame(camera, tri);
 
         tri = tri.rotate_around_center(euler);
         thread::sleep(Duration::from_millis(100));
