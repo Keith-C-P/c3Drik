@@ -175,13 +175,13 @@ impl Camera {
         let quaternion: Quaternion = Quaternion::euler_to_quaternion(euler);
         self.viewport_u = self
             .viewport_u
-            .rotate_around_point(self.camera_pos, quaternion);
+            .rotate_around_point(&self.camera_pos, &quaternion);
         self.viewport_v = self
             .viewport_v
-            .rotate_around_point(self.camera_pos, quaternion);
+            .rotate_around_point(&self.camera_pos, &quaternion);
         self.viewport_upper_left = self
             .viewport_upper_left
-            .rotate_around_point(self.camera_pos, quaternion);
+            .rotate_around_point(&self.camera_pos, &quaternion);
 
         match self.stretch {
             None => {

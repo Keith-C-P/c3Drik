@@ -8,7 +8,7 @@ pub struct Vec3 {
 }
 
 impl Vec3 {
-    pub fn rotate_around_point(self: Vec3, center: Vec3, rotation: rotation::Quaternion) -> Vec3 {
+    pub fn rotate_around_point(self: Vec3, center: &Vec3, rotation: &rotation::Quaternion) -> Vec3 {
         let p_normalised = Vec3 {
             x: self.x - center.x,
             y: self.y - center.y,
