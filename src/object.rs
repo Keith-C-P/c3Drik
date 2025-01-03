@@ -10,9 +10,9 @@ pub trait Object {
 }
 #[derive(Debug, Copy, Clone)]
 pub struct Triangle {
-    a: Vec3,
-    b: Vec3,
-    c: Vec3,
+    pub a: Vec3,
+    pub b: Vec3,
+    pub c: Vec3,
     center: Vec3,
 }
 impl Triangle {

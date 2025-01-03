@@ -1,4 +1,4 @@
-use crate::Vec3;
+use crate::{rotation::Quaternion, Vec3};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Stretch(pub f64, pub f64);
@@ -13,14 +13,15 @@ pub struct Camera {
     viewport_width: f64,
     camera_pos: Vec3,
 
-    viewport_u: Vec3,
-    viewport_v: Vec3,
+    pub viewport_u: Vec3,
+    pub viewport_v: Vec3,
 
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
 
-    vieport_upper_left: Vec3,
+    viewport_upper_left: Vec3,
     pixel00_loc: Vec3,
+    view_dir: Vec3,
 
     stretch: Option<Stretch>,
 }
@@ -60,15 +61,14 @@ impl Camera {
         let pixel_delta_u: Vec3 = viewport_u / image_width as f64;
         let pixel_delta_v: Vec3 = viewport_v / image_height as f64;
 
-        let vieport_upper_left: Vec3 = camera_pos
-            - Vec3 {
-                x: 0.0,
-                y: 0.0,
-                z: focal_length,
-            }
-            - (viewport_u / 2.0)
-            - (viewport_v / 2.0);
-        let pixel00_loc: Vec3 = vieport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+        let view_dir = Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 1.0,
+        };
+        let viewport_upper_left: Vec3 =
+            camera_pos - (view_dir * focal_length) - (viewport_u / 2.0) - (viewport_v / 2.0);
+        let pixel00_loc: Vec3 = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
         Camera {
             aspect_ratio,
@@ -82,8 +82,9 @@ impl Camera {
             camera_pos,
             pixel_delta_u,
             pixel_delta_v,
-            vieport_upper_left,
+            viewport_upper_left,
             pixel00_loc,
+            view_dir,
             stretch: Option::None,
         }
     }
@@ -120,18 +121,14 @@ impl Camera {
                 self.pixel_delta_u = (self.viewport_u / self.image_width as f64) * stretch.0;
                 self.pixel_delta_v = (self.viewport_v / self.image_height as f64) * stretch.1;
 
-                self.vieport_upper_left = self.camera_pos
-                    - Vec3 {
-                        x: 0.0,
-                        y: 0.0,
-                        z: self.focal_length,
-                    }
+                self.viewport_upper_left = self.camera_pos
+                    - (self.view_dir * self.focal_length)
                     - (self.viewport_u * stretch.0 / 2.0)
                     - (self.viewport_v * stretch.1 / 2.0);
             }
         }
         self.pixel00_loc =
-            self.vieport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+            self.viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
     }
 
     pub fn set_width(&mut self, width: i32) {
@@ -172,6 +169,32 @@ impl Camera {
     }
     pub fn camera_pos(&self) -> Vec3 {
         self.camera_pos
+    }
+
+    pub fn rotate_around_center(&mut self, euler: Vec3) {
+        let quaternion: Quaternion = Quaternion::euler_to_quaternion(euler);
+        self.viewport_u = self
+            .viewport_u
+            .rotate_around_point(self.camera_pos, quaternion);
+        self.viewport_v = self
+            .viewport_v
+            .rotate_around_point(self.camera_pos, quaternion);
+        self.viewport_upper_left = self
+            .viewport_upper_left
+            .rotate_around_point(self.camera_pos, quaternion);
+
+        match self.stretch {
+            None => {
+                self.pixel_delta_u = self.viewport_u / self.image_width as f64;
+                self.pixel_delta_v = self.viewport_v / self.image_height as f64;
+            }
+            Some(stretch) => {
+                self.pixel_delta_u = (self.viewport_u / self.image_width as f64) * stretch.0;
+                self.pixel_delta_v = (self.viewport_v / self.image_height as f64) * stretch.1;
+            }
+        }
+        self.pixel00_loc =
+            self.viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
     }
 }
 // TODO camera
