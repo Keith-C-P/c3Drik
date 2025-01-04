@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+libc = "0.2.169"
 libm = "0.2.11"
 term_size = "0.3.2"
+input = "0.9.1"
