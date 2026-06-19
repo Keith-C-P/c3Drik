@@ -76,10 +76,10 @@ impl ObjectTrait for Object {
                 if t > f64::EPSILON {
                     // ray intersection
                     let intersection_point = r.origin() + r.direction() * t;
-                    return true;
+                    true
                 } else {
                     // This means that there is a line intersection but not a ray intersection.
-                    return false;
+                    false
                 }
             }
             Self::Sphere { center, radius } => {
@@ -88,7 +88,7 @@ impl ObjectTrait for Object {
                 let b: f64 = -2.0 * Vec3::dot(&r.direction(), &oc);
                 let c: f64 = Vec3::dot(&oc, &oc) - radius * radius;
                 let discriminant: f64 = b * b - 4.0 * a * c;
-                return discriminant >= 0.0;
+                discriminant >= 0.0
             }
         }
     }
@@ -104,9 +104,9 @@ impl ObjectTrait for Object {
         match self {
             Self::Triangle { a, b, c, center } => {
                 let quaternion = Quaternion::euler_to_quaternion(euler);
-                let a: Vec3 = a.rotate_around_point(center, &quaternion);
-                let b: Vec3 = b.rotate_around_point(center, &quaternion);
-                let c: Vec3 = c.rotate_around_point(center, &quaternion);
+                let a: Vec3 = a.rotate_around_point_local(center, &quaternion);
+                let b: Vec3 = b.rotate_around_point_local(center, &quaternion);
+                let c: Vec3 = c.rotate_around_point_local(center, &quaternion);
                 Object::new_triangle(&a, &b, &c)
             }
             Self::Sphere {
@@ -119,16 +119,19 @@ impl ObjectTrait for Object {
         match self {
             Self::Triangle { a, b, c, center: _ } => {
                 let quaternion = Quaternion::euler_to_quaternion(euler);
-                let a: Vec3 = a.rotate_around_point(&point, &quaternion);
-                let b: Vec3 = b.rotate_around_point(&point, &quaternion);
-                let c: Vec3 = c.rotate_around_point(&point, &quaternion);
+                let a: Vec3 = a.rotate_around_point_local(&point, &quaternion);
+                let b: Vec3 = b.rotate_around_point_local(&point, &quaternion);
+                let c: Vec3 = c.rotate_around_point_local(&point, &quaternion);
                 Object::new_triangle(&a, &b, &c)
             }
             Self::Sphere { center, radius } => {
                 let quaternion = Quaternion::euler_to_quaternion(euler);
-                let center: Vec3 = center.rotate_around_point(&point, &quaternion);
+                let center: Vec3 = center.rotate_around_point_local(&point, &quaternion);
                 Object::new_sphere(&center, radius)
             }
         }
     }
 }
+
+//TODO:
+//[ ] add fmt for objects hence debug info

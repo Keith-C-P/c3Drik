@@ -1,3 +1,5 @@
+use libm::sqrt;
+
 use crate::rotation;
 use std::ops;
 #[derive(Debug, Copy, Clone)]
@@ -8,20 +10,71 @@ pub struct Vec3 {
 }
 
 impl Vec3 {
-    pub fn rotate_around_point(self: Vec3, center: &Vec3, rotation: &rotation::Quaternion) -> Vec3 {
+    pub fn rotate_local(self, rotation: &rotation::Quaternion) -> Vec3 {
+        let rotated =
+            rotation.rotate_local(&rotation::Quaternion::new(0.0, self.x, self.y, self.z));
+        Vec3 {
+            x: rotated.x,
+            y: rotated.y,
+            z: rotated.z,
+        }
+    }
+    pub fn rotate_global(self, rotation: &rotation::Quaternion) -> Vec3 {
+        let rotated =
+            rotation.rotate_global(&rotation::Quaternion::new(0.0, self.x, self.y, self.z));
+        Vec3 {
+            x: rotated.x,
+            y: rotated.y,
+            z: rotated.z,
+        }
+    }
+
+    pub fn rotate_around_point_local(self, center: &Vec3, rotation: &rotation::Quaternion) -> Vec3 {
         let p_normalised = Vec3 {
             x: self.x - center.x,
             y: self.y - center.y,
             z: self.z - center.z,
         };
 
-        let rotated_p_normalised = rotation.rotate(&p_normalised);
+        let rotated_p_normalised = rotation.rotate_point_local(&p_normalised);
 
         Vec3 {
             x: rotated_p_normalised.x + center.x,
             y: rotated_p_normalised.y + center.y,
             z: rotated_p_normalised.z + center.z,
         }
+    }
+    pub fn rotate_around_point_global(
+        self,
+        center: &Vec3,
+        rotation: &rotation::Quaternion,
+    ) -> Vec3 {
+        let p_normalised = Vec3 {
+            x: self.x - center.x,
+            y: self.y - center.y,
+            z: self.z - center.z,
+        };
+
+        let rotated_p_normalised = rotation.rotate_point_global(&p_normalised);
+
+        Vec3 {
+            x: rotated_p_normalised.x + center.x,
+            y: rotated_p_normalised.y + center.y,
+            z: rotated_p_normalised.z + center.z,
+        }
+    }
+
+    pub fn normalise(self) -> Vec3 {
+        let inv_sqrt = 1.0 / sqrt(self.x * self.x + self.y * self.y + self.z * self.z);
+        Vec3 {
+            x: self.x * inv_sqrt,
+            y: self.y * inv_sqrt,
+            z: self.z * inv_sqrt,
+        }
+    }
+
+    pub fn new(x: f64, y: f64, z: f64) -> Vec3 {
+        Vec3 { x, y, z }
     }
 }
 
@@ -121,6 +174,14 @@ macro_rules! impl_vec3_operations {
                 self.x *= rhs;
                 self.y *= rhs;
                 self.z *= rhs;
+            }
+        }
+
+        impl ops::Neg for $T {
+            type Output = Self;
+
+            fn neg(self) -> Self {
+                self * (-1.0)
             }
         }
 
